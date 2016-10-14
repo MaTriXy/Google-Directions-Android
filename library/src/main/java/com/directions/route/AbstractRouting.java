@@ -15,10 +15,11 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
+import java.util.List;
 
 
-public abstract class AbstractRouting extends AsyncTask<Void, Void, ArrayList<Route>> {
-    protected ArrayList<RoutingListener> _aListeners;
+public abstract class AbstractRouting extends AsyncTask<Void, Void, List<Route>> {
+    protected List<RoutingListener> alisteners;
 
     protected static final String DIRECTIONS_API_URL = "https://maps.googleapis.com/maps/api/directions/json?";
 
@@ -31,14 +32,14 @@ public abstract class AbstractRouting extends AsyncTask<Void, Void, ArrayList<Ro
         WALKING("walking"),
         TRANSIT("transit");
 
-        protected String _sValue;
+        protected String sValue;
 
         TravelMode(String sValue) {
-            this._sValue = sValue;
+            this.sValue = sValue;
         }
 
         protected String getValue() {
-            return _sValue;
+            return sValue;
         }
     }
 
@@ -47,61 +48,60 @@ public abstract class AbstractRouting extends AsyncTask<Void, Void, ArrayList<Ro
         HIGHWAYS (1 << 1, "highways"),
         FERRIES (1 << 2, "ferries");
 
-        private final String _sRequestParam;
-        private final int _sBitValue;
+        private final String sRequestParam;
+        private final int sBitValue;
 
         AvoidKind(int bit, String param) {
-            this._sBitValue = bit;
-            this._sRequestParam = param;
+            this.sBitValue = bit;
+            this.sRequestParam = param;
         }
 
         protected int getBitValue () {
-            return _sBitValue;
+            return sBitValue;
         }
 
         protected static String getRequestParam (int bit) {
-            String ret = "";
+            StringBuilder ret = new StringBuilder();
             for (AvoidKind kind : AvoidKind.values()) {
-                if ((bit & kind._sBitValue) == kind._sBitValue) {
-                    ret += kind._sRequestParam;
-                    ret += "|";
+                if ((bit & kind.sBitValue) == kind.sBitValue) {
+                    ret.append(kind.sRequestParam).append('|');
                 }
             }
-            return ret;
+            return ret.toString();
         }
     }
 
     protected AbstractRouting (RoutingListener listener) {
-        this._aListeners = new ArrayList<RoutingListener>();
+        this.alisteners = new ArrayList<RoutingListener>();
         registerListener(listener);
     }
 
     public void registerListener(RoutingListener mListener) {
         if (mListener != null) {
-            _aListeners.add(mListener);
+            alisteners.add(mListener);
         }
     }
 
     protected void dispatchOnStart() {
-        for (RoutingListener mListener : _aListeners) {
+        for (RoutingListener mListener : alisteners) {
             mListener.onRoutingStart();
         }
     }
 
     protected void dispatchOnFailure(RouteException exception) {
-        for (RoutingListener mListener : _aListeners) {
+        for (RoutingListener mListener : alisteners) {
             mListener.onRoutingFailure(exception);
         }
     }
 
-    protected void dispatchOnSuccess(ArrayList<Route> route, int shortestRouteIndex) {
-        for (RoutingListener mListener : _aListeners) {
+    protected void dispatchOnSuccess(List<Route> route, int shortestRouteIndex) {
+        for (RoutingListener mListener : alisteners) {
             mListener.onRoutingSuccess(route, shortestRouteIndex);
         }
     }
 
     private void dispatchOnCancelled() {
-        for (RoutingListener mListener : _aListeners) {
+        for (RoutingListener mListener : alisteners) {
             mListener.onRoutingCancelled();
         }
     }
@@ -113,8 +113,8 @@ public abstract class AbstractRouting extends AsyncTask<Void, Void, ArrayList<Ro
      * @return an array list containing the routes
      */
     @Override
-    protected ArrayList<Route> doInBackground(Void... voids) {
-        ArrayList<Route> result = new ArrayList<Route>();
+    protected List<Route> doInBackground(Void... voids) {
+        List<Route> result = new ArrayList<Route>();
         try {
             result = new GoogleParser(constructURL()).parse();
         }catch(RouteException e){
@@ -131,7 +131,7 @@ public abstract class AbstractRouting extends AsyncTask<Void, Void, ArrayList<Ro
     }
 
     @Override
-    protected void onPostExecute(ArrayList<Route> result) {
+    protected void onPostExecute(List<Route> result) {
         if (!result.isEmpty()) {
             int shortestRouteIndex = 0;
             int minDistance = Integer.MAX_VALUE;
